@@ -12,12 +12,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update leads_status.json
+        env:
+          LEAD_ID: ${{ github.event.client_payload.id }}
+          LEAD_STATUS: ${{ github.event.client_payload.status }}
         run: |
           python3 << 'EOF'
-          import json
+          import json, os
 
-          lead_id = str(${{ toJson(github.event.client_payload.id) }})
-          status  = "${{ github.event.client_payload.status }}"
+          lead_id = str(os.environ["LEAD_ID"])
+          status  = os.environ["LEAD_STATUS"]
 
           with open("leads_status.json") as f:
               data = json.load(f)
@@ -29,6 +32,8 @@ jobs:
 
           with open("leads_status.json", "w") as f:
               json.dump(data, f, indent=2, sort_keys=True)
+
+          print(f"Lead {lead_id} -> {status}")
           EOF
 
       - name: Commit and push
