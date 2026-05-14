@@ -18,6 +18,7 @@ jobs:
           LEAD_ID: ${{ github.event.client_payload.id }}
           LEAD_STATUS: ${{ github.event.client_payload.status }}
         run: |
+          git pull origin main
           python3 << 'EOF'
           import json, os
 
@@ -44,5 +45,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add leads_status.json
           git diff --staged --quiet || git commit -m "tracker: lead ${{ github.event.client_payload.id }} -> ${{ github.event.client_payload.status }}"
-          git pull --rebase
           git push
