@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FreshDCards — Glengarry Leads v8.1</title>
+<title>FreshDCards — Glengarry Leads v8.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
 :root {
@@ -78,7 +78,7 @@ select.dinput{cursor:pointer;}
 <header>
   <div>
     <div class="hlbl">FreshDCards Outreach</div>
-    <div class="htitle">The <em>Glengarry</em> Leads · v8.1</div>
+    <div class="htitle">The <em>Glengarry</em> Leads · v8.2</div>
   </div>
   <div class="vbadge"><!-- v8 · 2026-05-15 --><br><span id="cnt">310</span> LEADS</div>
 </header>
@@ -303,6 +303,16 @@ function copyPitch(id) {
 }
 
 // ── Render ──
+function esc(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function makeUrl(url) {
   const m = (url || '').match(/https?:\/\/[^\s·]+|[\w-]+\.(com|org|net|io|substack\.com|gov)\/[^\s·]*/i);
   if (!m) return null;
@@ -315,8 +325,8 @@ function cardHTML(l) {
   const tc = TIERS[l.tier] || ['#f0ede8','#555','#ccc','Other'];
   const url = makeUrl(l.url);
   const handleTag = url
-    ? '<a class="handle" href="' + url + '" target="_blank" rel="noopener">' + l.url + ' ↗</a>'
-    : '<div class="handle">' + l.url + '</div>';
+    ? '<a class="handle" href="' + url + '" target="_blank" rel="noopener">' + esc(l.url) + ' ↗</a>'
+    : '<div class="handle">' + esc(l.url) + '</div>';
   
   const badge = st ? '<div class="badge" style="display:block;background:' + (st==='sent'?'var(--green-bg)':st==='wait'?'var(--yell-bg)':'var(--skip-bg)') + ';color:' + (st==='sent'?'var(--green)':st==='wait'?'var(--yellow)':'var(--muted)') + ';border-color:' + (st==='sent'?'var(--green-bd)':st==='wait'?'var(--yell-bd)':'var(--skip-bd)') + '">' + (st==='sent'?'Sent ✓':st==='wait'?'Follow Up':'Skipped') + '</div>' : '';
 
@@ -327,9 +337,9 @@ function cardHTML(l) {
   }).join('');
 
   const savedParts = [];
-  if (e.email) savedParts.push('📧 <span>' + e.email + '</span>');
-  if (e.note)  savedParts.push('📝 <span>' + e.note + '</span>');
-  if (e.reason)savedParts.push('⚠ <span>' + e.reason + '</span>');
+  if (e.email) savedParts.push('📧 <span>' + esc(e.email) + '</span>');
+  if (e.note)  savedParts.push('📝 <span>' + esc(e.note) + '</span>');
+  if (e.reason)savedParts.push('⚠ <span>' + esc(e.reason) + '</span>');
   const saved = savedParts.length ? '<div class="saved">' + savedParts.join('<br>') + '</div>' : '';
 
   const reasonOpts = SKIP_REASONS.map(r => '<option value="' + r + '"' + (e.reason===r?' selected':'') + '>' + (r||'— select reason —') + '</option>').join('');
@@ -339,11 +349,11 @@ function cardHTML(l) {
 
   return '<div class="card' + (st?' s-'+st:'') + '" data-id="' + l.id + '" data-tier="' + l.tier + '">'
     + badge
-    + '<div class="card-head"><div><div class="name">' + l.name + '</div>' + handleTag + '</div>'
+    + '<div class="card-head"><div><div class="name">' + esc(l.name) + '</div>' + handleTag + '</div>'
     + '<div class="tags"><span class="tag" style="background:' + tc[0] + ';color:' + tc[1] + ';border-color:' + tc[2] + '">' + tc[3] + '</span>'
-    + '<span class="tag" style="background:#f0ede8;color:#888;border-color:#ddd">' + (l.size||'').slice(0,22) + '</span></div></div>'
-    + '<div class="meta"><div class="m">Contact: <b>' + (l.contact||'') + '</b></div><div class="m">Hook: <b>' + (l.hook||'').slice(0,55) + '</b></div></div>'
-    + (l.why ? '<div class="why">' + l.why + '</div>' : '')
+    + '<span class="tag" style="background:#f0ede8;color:#888;border-color:#ddd">' + esc((l.size||'').slice(0,22)) + '</span></div></div>'
+    + '<div class="meta"><div class="m">Contact: <b>' + esc(l.contact||'') + '</b></div><div class="m">Hook: <b>' + esc((l.hook||'').slice(0,55)) + '</b></div></div>'
+    + (l.why ? '<div class="why">' + esc(l.why) + '</div>' : '')
     + '<div class="plbl">Pitch</div>'
     + '<div class="pbody" id="pb-' + l.id + '"></div>'
     + '<div class="brow">'
