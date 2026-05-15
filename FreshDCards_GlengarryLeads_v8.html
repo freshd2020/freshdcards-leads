@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FreshDCards — Glengarry Leads v8</title>
+<title>FreshDCards — Glengarry Leads v8.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
 :root {
@@ -78,7 +78,7 @@ select.dinput{cursor:pointer;}
 <header>
   <div>
     <div class="hlbl">FreshDCards Outreach</div>
-    <div class="htitle">The <em>Glengarry</em> Leads · v8</div>
+    <div class="htitle">The <em>Glengarry</em> Leads · v8.1</div>
   </div>
   <div class="vbadge"><!-- v8 · 2026-05-15 --><br><span id="cnt">310</span> LEADS</div>
 </header>
@@ -211,25 +211,29 @@ function sync(state, msg) {
 // ── Load ──
 async function init() {
   document.getElementById('cnt').textContent = LEADS.length;
-  // Render immediately with empty statuses so leads are visible right away
   render();
+  sync('ok', '✓ ' + LEADS.length + ' leads ready');
+  // Load statuses in background - don't block render
+  loadStatuses();
+}
+
+async function loadStatuses() {
   const c = getCfg();
-  if (!c.tok || !c.repo) {
-    sync('err', '⚠ Add GitHub config to save statuses');
-    return;
-  }
-  sync('wait', '⟳ Loading statuses…');
+  if (!c.tok || !c.repo) return;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    setTimeout(() => controller.abort(), 8000);
     const r = await fetch(rawUrl('leads_status.json'), { signal: controller.signal });
-    clearTimeout(timer);
-    ST = r.ok ? await r.json() : {};
-    sync('ok', '✓ Ready');
-    // Re-render with statuses applied
-    render();
+    if (!r.ok) return;
+    const data = await r.json();
+    // Only re-render if we got actual status data
+    if (Object.keys(data).length > 0) {
+      ST = data;
+      render();
+      sync('ok', '✓ Statuses loaded');
+    }
   } catch(e) {
-    sync('err', e.name === 'AbortError' ? '⚠ Status load timed out — saves will still work' : '✗ ' + e.message);
+    // Silent fail - statuses just won't show until next load
   }
 }
 
