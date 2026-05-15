@@ -17,30 +17,73 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Pull latest
+        run: git pull origin main
+
       - name: Update leads_status.json
         env:
-          LEAD_ID: ${{ github.event.client_payload.id }}
+          LEAD_ID:     ${{ github.event.client_payload.id }}
           LEAD_STATUS: ${{ github.event.client_payload.status }}
+          LEAD_REASON: ${{ github.event.client_payload.reason }}
+          LEAD_EMAIL:  ${{ github.event.client_payload.email }}
+          LEAD_NOTE:   ${{ github.event.client_payload.note }}
         run: |
-          git pull origin main
           python3 << 'EOF'
           import json, os
 
-          lead_id = str(os.environ["LEAD_ID"])
-          status  = os.environ["LEAD_STATUS"]
+          lead_id = str(os.environ.get("LEAD_ID", "")).strip()
+          if not lead_id:
+              print("No lead_id, skipping")
+              exit(0)
 
           with open("leads_status.json") as f:
               data = json.load(f)
 
-          if data.get(lead_id) == status or status == "clear":
+          if lead_id not in data:
+              data[lead_id] = {}
+
+          entry = data[lead_id]
+
+          # Status
+          status = os.environ.get("LEAD_STATUS", "").strip()
+          if status:
+              if status == "clear" or entry.get("status") == status:
+                  entry.pop("status", None)
+                  entry.pop("reason", None)
+              else:
+                  entry["status"] = status
+                  if status != "skip":
+                      entry.pop("reason", None)
+
+          # Skip reason
+          reason = os.environ.get("LEAD_REASON", "").strip()
+          if reason:
+              entry["reason"] = reason
+          elif reason == "" and "LEAD_REASON" in os.environ and os.environ["LEAD_REASON"] == "":
+              entry.pop("reason", None)
+
+          # Email
+          email = os.environ.get("LEAD_EMAIL", "").strip()
+          if email:
+              entry["email"] = email
+          elif os.environ.get("LEAD_EMAIL") == "":
+              entry.pop("email", None)
+
+          # Note
+          note = os.environ.get("LEAD_NOTE", "").strip()
+          if note:
+              entry["note"] = note
+          elif os.environ.get("LEAD_NOTE") == "":
+              entry.pop("note", None)
+
+          # Clean up empty entries
+          if not entry:
               data.pop(lead_id, None)
-          else:
-              data[lead_id] = status
 
           with open("leads_status.json", "w") as f:
               json.dump(data, f, indent=2, sort_keys=True)
 
-          print(f"Lead {lead_id} -> {status}")
+          print(f"Lead {lead_id} updated: {entry}")
           EOF
 
       - name: Commit and push
@@ -48,5 +91,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add leads_status.json
-          git diff --staged --quiet || git commit -m "tracker: lead ${{ github.event.client_payload.id }} -> ${{ github.event.client_payload.status }}"
+          git diff --staged --quiet || git commit -m "tracker: lead ${{ github.event.client_payload.id }} updated"
           git push
