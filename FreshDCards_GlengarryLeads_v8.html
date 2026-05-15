@@ -211,22 +211,26 @@ function sync(state, msg) {
 // ── Load ──
 async function init() {
   document.getElementById('cnt').textContent = LEADS.length;
+  // Render immediately with empty statuses so leads are visible right away
+  render();
   const c = getCfg();
   if (!c.tok || !c.repo) {
-    sync('err', '⚠ Add GitHub config to save');
-    render();
+    sync('err', '⚠ Add GitHub config to save statuses');
     return;
   }
   sync('wait', '⟳ Loading statuses…');
   try {
-    const r = await fetch(rawUrl('leads_status.json'));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const r = await fetch(rawUrl('leads_status.json'), { signal: controller.signal });
+    clearTimeout(timer);
     ST = r.ok ? await r.json() : {};
     sync('ok', '✓ Ready');
+    // Re-render with statuses applied
+    render();
   } catch(e) {
-    sync('err', '✗ ' + e.message);
-    ST = {};
+    sync('err', e.name === 'AbortError' ? '⚠ Status load timed out — saves will still work' : '✗ ' + e.message);
   }
-  render();
 }
 
 // ── Status ──
