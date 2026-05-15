@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshDCards — Glengarry Leads</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg:       #f5f4f0;
+  --surface:  #ffffff;
+  --surface2: #f0ede8;
+  --border:   #ddd9d2;
+  --ink:      #1a1814;
+  --muted:    #888480;
+  --accent:   #b5601a;
+  --green:    #2d7a4f;
+  --green-bg: #edf7f1;
+  --green-bd: #a8d9bc;
+  --yellow:   #a07010;
+  --yell-bg:  #fdf8ed;
+  --yell-bd:  #e0c87a;
+  --red:      #c0392b;
+  --skip-bg:  #f5f4f0;
+  --skip-bd:  #ccc8c0;
+  --mono:     'DM Mono', monospace;
+  --sans:     'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.6; padding: 40px 24px 100px; max-width: 920px; margin: 0 auto; }
+
+/* ── HEADER ── */
+header { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.h-left .hlbl { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin-bottom: 6px; }
+.h-left .htitle { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.h-left .htitle em { color: var(--accent); font-style: normal; }
+.vbadge { font-family: var(--mono); font-size: 10px; background: var(--ink); color: #fff; padding: 6px 14px; border-radius: 3px; font-weight: 700; letter-spacing: 1px; text-align: center; line-height: 1.7; white-space: nowrap; }
+
+/* ── CONFIG ── */
+#config-banner { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 4px; padding: 16px 20px; margin-bottom: 20px; }
+#config-banner h3 { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+#config-banner label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px; margin-top: 8px; }
+#config-banner input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--ink); font-family: var(--mono); font-size: 11px; padding: 6px 10px; border-radius: 3px; }
+#config-banner input:focus { outline: none; border-color: var(--accent); }
+.cfg-row { display: flex; gap: 8px; margin-top: 12px; }
+#config-save { background: var(--accent); color: #fff; border: none; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 7px 18px; border-radius: 3px; cursor: pointer; font-weight: 700; }
+#config-save:hover { background: #9a4e14; }
+#config-toggle { background: none; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 7px 14px; border-radius: 3px; cursor: pointer; }
+.cfg-note { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+
+/* ── SUMMARY + FILTER ── */
+#summary-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+#summary-bar .lbl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 4px; }
+#sync-status { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+#sync-status.syncing { color: var(--yellow); }
+#sync-status.ok  { color: var(--green); }
+#sync-status.err { color: var(--red); }
+
+#filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; }
+.filter-btn { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 5px 14px; border-radius: 3px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--muted); transition: all 0.1s; }
+.filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.filter-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.filter-btn.f-sent.active  { background: var(--green); border-color: var(--green); }
+.filter-btn.f-wait.active  { background: var(--yellow); border-color: var(--yellow); }
+.filter-btn.f-skip.active  { background: var(--muted); border-color: var(--muted); }
+
+/* ── SECTION HEADERS ── */
+h2 { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 7px; margin: 36px 0 14px; }
+
+/* ── CARD ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 18px 20px; margin-bottom: 8px; transition: border-color 0.15s, box-shadow 0.15s; }
+.card:hover { border-color: #c8c4bc; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.card.status-sent { border-left: 3px solid var(--green); }
+.card.status-wait { border-left: 3px solid var(--yellow); }
+.card.status-skip { opacity: 0.45; }
+
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.name { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.handle { font-family: var(--mono); font-size: 10px; color: var(--accent); margin-top: 2px; }
+a.handle-link { font-family: var(--mono); font-size: 10px; color: var(--accent); margin-top: 2px; display: block; text-decoration: none; font-weight: 600; }
+a.handle-link:hover { text-decoration: underline; }
+.tags { display: flex; gap: 5px; flex-wrap: wrap; flex-shrink: 0; }
+.tag { font-family: var(--mono); font-size: 9px; padding: 2px 8px; border-radius: 2px; white-space: nowrap; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; border: 1px solid; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.m { font-family: var(--mono); font-size: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 3px 8px; color: var(--muted); line-height: 1.3; }
+.m b { color: var(--ink); }
+
+.why { background: var(--surface2); border-left: 3px solid var(--accent); padding: 9px 13px; font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; border-radius: 0 3px 3px 0; }
+
+.pitch-lbl { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; }
+.pitch-body { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid #2d7a4f; border-radius: 0 3px 3px 0; padding: 12px 14px; font-size: 13px; line-height: 1.8; color: var(--ink); margin-bottom: 10px; white-space: pre-line; }
+
+/* ── ACTION BUTTONS ── */
+.btn-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.copy-btn { background: var(--ink); color: #fff; border: none; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; padding: 7px 13px; border-radius: 3px; cursor: pointer; }
+.copy-btn:hover { background: #333; }
+.gmail-btn { display: inline-flex; align-items: center; gap: 6px; background: #ea4335; color: #fff; border: none; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; padding: 7px 14px; border-radius: 3px; cursor: pointer; text-decoration: none; }
+.gmail-btn:hover { background: #c0392b; }
+.note-sys { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+
+/* ── STATUS BUTTONS ── */
+.status-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+.stbtn { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 5px 12px; border-radius: 3px; cursor: pointer; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); transition: all 0.1s; opacity: 0.7; }
+.stbtn:hover { opacity: 1; }
+.stbtn.active-sent { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); font-weight: 700; opacity: 1; }
+.stbtn.active-wait { background: var(--yell-bg); border-color: var(--yell-bd); color: var(--yellow); font-weight: 700; opacity: 1; }
+.stbtn.active-skip { background: var(--skip-bg); border-color: var(--skip-bd); color: var(--muted); font-weight: 700; opacity: 1; }
+
+/* ── STATUS BADGE ── */
+.status-badge { display: none; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 3px; border: 1px solid; margin-bottom: 10px; width: fit-content; }
+
+/* ── EXPANDABLE DETAIL PANEL ── */
+.detail-toggle { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); cursor: pointer; background: none; border: none; padding: 0; margin-left: auto; }
+.detail-toggle:hover { text-decoration: underline; }
+.detail-panel { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.detail-panel.open { display: block; }
+.detail-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.detail-label { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); min-width: 80px; padding-top: 7px; }
+.detail-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--ink); font-family: var(--mono); font-size: 11px; padding: 6px 10px; border-radius: 3px; }
+.detail-input:focus { outline: none; border-color: var(--accent); }
+textarea.detail-input { resize: vertical; min-height: 60px; font-family: var(--sans); font-size: 12px; line-height: 1.5; }
+select.detail-input { cursor: pointer; }
+.detail-save { background: var(--accent); color: #fff; border: none; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 6px 14px; border-radius: 3px; cursor: pointer; margin-top: 4px; }
+.detail-save:hover { background: #9a4e14; }
+.saved-data { font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 6px 10px; margin-top: 8px; line-height: 1.7; }
+.saved-data span { color: var(--ink); }
+
+#loading { text-align: center; padding: 60px 0; font-family: var(--mono); color: var(--muted); font-size: 12px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div class="hlbl">FreshDCards Outreach</div>
+    <div class="htitle">The <em>Glengarry</em> Leads · v6</div>
+  </div>
+  <div class="vbadge"><!-- v6 · 2026-05-14 --><br><span id="total-count">…</span> LEADS<br>GITHUB-BACKED</div>
+</header>
+
+<!-- CONFIG -->
+<div id="config-banner">
+  <h3>⚙ GitHub Config <button id="config-toggle" onclick="toggleConfig()">Hide</button></h3>
+  <div id="config-fields">
+    <label>Personal Access Token</label>
+    <input type="password" id="cfg-token" placeholder="github_pat_xxx or ghp_xxx" />
+    <label>Repo (owner/repo)</label>
+    <input type="text" id="cfg-repo" placeholder="freshd2020/freshdcards-leads" />
+    <label>Branch</label>
+    <input type="text" id="cfg-branch" placeholder="main" />
+    <div class="cfg-row">
+      <button id="config-save" onclick="saveConfig()">Save & Reload</button>
+    </div>
+    <div class="cfg-note">Token stored in localStorage (this browser only). Repo must have leads_data.json, leads_status.json, and .github/workflows/update-lead-status.yml</div>
+  </div>
+</div>
+
+<div id="summary-bar">
+  <div>
+    <span class="lbl">Live Tracker</span>
+    <span id="summary">Loading…</span>
+  </div>
+  <div id="sync-status">⟳ Connecting…</div>
+</div>
+
+<div id="filter-bar">
+  <button class="filter-btn f-all active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn f-todo" onclick="setFilter('todo',this)">To Do</button>
+  <button class="filter-btn f-sent" onclick="setFilter('sent',this)">Sent ✓</button>
+  <button class="filter-btn f-wait" onclick="setFilter('wait',this)">Follow Up</button>
+  <button class="filter-btn f-skip" onclick="setFilter('skip',this)">Skipped</button>
+</div>
+
+<div id="loading">Loading leads from GitHub…</div>
+<div id="cards-container"></div>
+
+<script>
+// ── v6 · 2026-05-14 ─────────────────────────────────────────────────
+
+const SKIP_REASONS = [
+  '', 'No sponsors policy', 'Too expensive', 'Ghost — no reply',
+  'Wrong audience', 'Account inactive', 'Already a client', 'Other'
+];
+
+const TIER_COLORS = {
+  'Hobby Substack':   { bg:'#fef9ec', color:'#a07010', border:'#e8c84a', label:'Substack/Pod' },
+  'Gift Guide':       { bg:'#eef4fb', color:'#1a4a8a', border:'#90b8d8', label:'Gift Guide'   },
+  'Wholesale Retail': { bg:'#edf7f1', color:'#1a5a30', border:'#80c890', label:'Wholesale'    },
+  'NBA Playoff IG':   { bg:'#f8eef8', color:'#6a1a8a', border:'#c080c0', label:'Playoff IG'   },
+  'NBA Fan IG':       { bg:'#f2eef8', color:'#4a1a8a', border:'#a080c8', label:'NBA IG'       },
+  'MLB Fan IG':       { bg:'#eef4f8', color:'#1a3a6a', border:'#80a8c8', label:'MLB IG'       },
+  'MLB Fan Blog':     { bg:'#fdf2ec', color:'#8a3a10', border:'#d8906a', label:'MLB Blog'     },
+  'NFL Fan IG':       { bg:'#fdf0ee', color:'#8a1a1a', border:'#d88080', label:'NFL IG'       },
+  'NFL Fan Blog':     { bg:'#fdf0ee', color:'#8a1a1a', border:'#d88080', label:'NFL Blog'     },
+  'NHL Fan IG':       { bg:'#eef8f8', color:'#0a5a5a', border:'#70c0c0', label:'NHL IG'       },
+  'Local Sports Bar': { bg:'#fdfaee', color:'#7a6010', border:'#d8c060', label:'Sports Bar'   },
+};
+
+const DEFAULT_TIER = { bg:'#f0ede8', color:'#555', border:'#ccc', label:'Other' };
+
+let LEADS = [], STATUSES = {}, currentFilter = 'all', pendingSync = null;
+
+// ── Config ───────────────────────────────────────────────────────────
+function getCfg() {
+  return {
+    token:  localStorage.getItem('gh_token')  || '',
+    repo:   localStorage.getItem('gh_repo')   || '',
+    branch: localStorage.getItem('gh_branch') || 'main',
+  };
+}
+function saveConfig() {
+  const t = document.getElementById('cfg-token').value.trim();
+  const r = document.getElementById('cfg-repo').value.trim();
+  const b = document.getElementById('cfg-branch').value.trim() || 'main';
+  if (!t || !r) { alert('Token and repo are required'); return; }
+  localStorage.setItem('gh_token', t);
+  localStorage.setItem('gh_repo', r);
+  localStorage.setItem('gh_branch', b);
+  setSyncStatus('ok', '✓ Saved — reloading…');
+  setTimeout(() => location.reload(), 700);
+}
+function toggleConfig() {
+  const f = document.getElementById('config-fields');
+  const btn = document.getElementById('config-toggle');
+  const hidden = f.style.display === 'none';
+  f.style.display = hidden ? '' : 'none';
+  btn.textContent = hidden ? 'Hide' : 'Show';
+}
+function prefillConfig() {
+  const cfg = getCfg();
+  document.getElementById('cfg-token').value  = cfg.token;
+  document.getElementById('cfg-repo').value   = cfg.repo;
+  document.getElementById('cfg-branch').value = cfg.branch;
+  if (cfg.token && cfg.repo) {
+    document.getElementById('config-fields').style.display = 'none';
+    document.getElementById('config-toggle').textContent = 'Show';
+  }
+}
+
+// ── GitHub helpers ───────────────────────────────────────────────────
+function rawUrl(file) {
+  const cfg = getCfg();
+  return `https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${file}?t=${Date.now()}`;
+}
+async function dispatch(payload) {
+  const cfg = getCfg();
+  return fetch(`https://api.github.com/repos/${cfg.repo}/dispatches`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${cfg.token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ event_type: 'update-lead-status', client_payload: payload })
+  });
+}
+function setSyncStatus(state, msg) {
+  const el = document.getElementById('sync-status');
+  el.className = state;
+  el.textContent = msg;
+}
+
+// ── Load ─────────────────────────────────────────────────────────────
+async function loadData() {
+  const cfg = getCfg();
+  if (!cfg.token || !cfg.repo) {
+    setSyncStatus('err', '⚠ Config required');
+    document.getElementById('loading').textContent = 'Fill in GitHub config above and save.';
+    return;
+  }
+  setSyncStatus('syncing', '⟳ Loading…');
+  try {
+    const [lr, sr] = await Promise.all([
+      fetch(rawUrl('leads_data.json')),
+      fetch(rawUrl('leads_status.json')),
+    ]);
+    if (!lr.ok) throw new Error(`leads_data.json ${lr.status}`);
+    LEADS    = await lr.json();
+    STATUSES = sr.ok ? await sr.json() : {};
+    document.getElementById('total-count').textContent = LEADS.length;
+    setSyncStatus('ok', `✓ ${LEADS.length} leads loaded`);
+    render();
+  } catch(e) {
+    setSyncStatus('err', `✗ ${e.message}`);
+    document.getElementById('loading').textContent = `Error: ${e.message}`;
+  }
+}
+
+// ── Status update ────────────────────────────────────────────────────
+async function sendUpdate(payload) {
+  setSyncStatus('syncing', '⟳ Saving…');
+  if (pendingSync) clearTimeout(pendingSync);
+  pendingSync = setTimeout(async () => {
+    try {
+      const res = await dispatch(payload);
+      if (res.status === 204) {
+        setSyncStatus('ok', '✓ Saved');
+        setTimeout(() => setSyncStatus('ok', `✓ ${LEADS.length} leads`), 2500);
+      } else {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status}: ${txt.slice(0,100)}`);
+      }
+    } catch(e) {
+      setSyncStatus('err', `✗ ${e.message}`);
+    }
+  }, 300);
+}
+
+function setStatus(id, status) {
+  // Always work from a copy of existing entry to preserve notes/email
+  if (!STATUSES[id]) STATUSES[id] = {};
+  const entry = STATUSES[id];
+
+  if (entry.status === status) {
+    delete entry.status;
+    delete entry.reason;
+  } else {
+    entry.status = status;
+    if (status !== 'skip') delete entry.reason;
+  }
+
+  // Clean up only if truly empty (no notes, no email either)
+  if (Object.keys(entry).length === 0) delete STATUSES[id];
+  else STATUSES[id] = entry;
+
+  refreshCard(id);
+  updateSummary();
+  sendUpdate({ id: String(id), status: (STATUSES[id]?.status || 'clear') });
+}
+
+function saveDetail(id) {
+  // Always work from existing entry — never overwrite what's already there
+  if (!STATUSES[id]) STATUSES[id] = {};
+  const entry = STATUSES[id];
+
+  const emailEl  = document.getElementById(`email-${id}`);
+  const noteEl   = document.getElementById(`note-${id}`);
+  const reasonEl = document.getElementById(`reason-${id}`);
+
+  const payload = { id: String(id) };
+
+  if (emailEl) {
+    const v = emailEl.value.trim();
+    if (v) entry.email = v; else delete entry.email;
+    payload.email = v;
+  }
+  if (noteEl) {
+    const v = noteEl.value.trim();
+    if (v) entry.note = v; else delete entry.note;
+    payload.note = v;
+  }
+  if (reasonEl) {
+    const v = reasonEl.value.trim();
+    if (v) entry.reason = v; else delete entry.reason;
+    payload.reason = v;
+  }
+
+  // Clean up only if completely empty
+  if (Object.keys(entry).length === 0) delete STATUSES[id];
+  else STATUSES[id] = entry;
+
+  // Refresh card but keep detail panel open
+  const panel = document.getElementById(`detail-${id}`);
+  const wasOpen = panel && panel.classList.contains('open');
+  refreshCard(id);
+  if (wasOpen) {
+    const newPanel = document.getElementById(`detail-${id}`);
+    if (newPanel) newPanel.classList.add('open');
+  }
+
+  updateSummary();
+  sendUpdate(payload);
+
+  const btn = document.getElementById(`save-${id}`);
+  if (btn) {
+    btn.textContent = 'Saved ✓';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+const SECTION_MAP = {
+  'Hobby Substack':   '🗞  Hobby Substacks · Card Writers · Podcasts',
+  'Gift Guide':       '🎁  Gift Guides · Lifestyle Sites · Regional Media',
+  'Wholesale Retail': '🏪  Wholesale Retail · Card Shops · Mall Retail',
+  'NBA Playoff IG':   '🏀  NBA Playoff IG',
+  'NBA Fan IG':       '🏀  NBA Fan IG',
+  'MLB Fan IG':       '⚾  MLB Fan IG',
+  'MLB Fan Blog':     '⚾  MLB Blogs · Reddit · Facebook Groups',
+  'NFL Fan IG':       '🏈  NFL Fan IG',
+  'NFL Fan Blog':     '🏈  NFL Fan Blogs',
+  'NHL Fan IG':       '🏒  NHL Fan IG',
+  'Local Sports Bar': '🍺  Sports Bars · Watch Party Venues',
+};
+
+function gmailUrl(to, subject, body) {
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function buildCardHTML(l) {
+  const entry  = STATUSES[l.id] || {};
+  const status = entry.status || null;
+  const tc     = TIER_COLORS[l.tier] || DEFAULT_TIER;
+
+  const cardClass = `card${status ? ' status-'+status : ''}`;
+  const cardDisplay = shouldShow(l) ? '' : 'display:none';
+
+  // Build clickable URL
+  const urlMatch = (l.url || '').match(/(https?:\/\/[^\s·]+|(?:[\w-]+\.(?:com|org|net|io|substack\.com)\/[^\s·]*))/i);
+  let urlHref = '';
+  if (urlMatch) {
+    urlHref = urlMatch[0].startsWith('http') ? urlMatch[0] : 'https://' + urlMatch[0];
+  }
+  const handleHTML = urlHref
+    ? `<a class="handle handle-link" href="${urlHref}" target="_blank" rel="noopener">${l.url} ↗</a>`
+    : `<div class="handle">${l.url}</div>`;
+
+  // Status badge
+  const badgeStyle = status ? getBadgeStyle(status) : 'display:none';
+  const badgeText  = status ? getStatusLabel(status) : '';
+
+  // Status buttons
+  const stBtns = ['sent','wait','skip'].map(st => {
+    const isActive = status === st;
+    const activeClass = isActive ? `active-${st}` : '';
+    const label = st === 'sent' ? 'Mark Sent' : st === 'wait' ? 'Follow Up' : 'Skip';
+    return `<button class="stbtn ${activeClass}" onclick="setStatus(${l.id},&quot;${st}&quot;)">${label}</button>`;
+  }).join('');
+
+  // Skip reason selector (only when skip)
+  const reasonOptions = SKIP_REASONS.map(r =>
+    `<option value="${r}" ${entry.reason === r ? 'selected' : ''}>${r || '— select reason —'}</option>`
+  ).join('');
+  const reasonRow = `
+    <div class="detail-row">
+      <div class="detail-label">Skip Reason</div>
+      <select class="detail-input" id="reason-${l.id}">
+        ${reasonOptions}
+      </select>
+    </div>`;
+
+  // Saved data display
+  const savedParts = [];
+  if (entry.email)  savedParts.push(`📧 <span>${entry.email}</span>`);
+  if (entry.note)   savedParts.push(`📝 <span>${entry.note}</span>`);
+  if (entry.reason) savedParts.push(`⚠ <span>${entry.reason}</span>`);
+  const savedHtml = savedParts.length ? `<div class="saved-data">${savedParts.join('<br>')}</div>` : '';
+
+  // Detail toggle label
+  const hasDetail = entry.email || entry.note || entry.reason;
+  const toggleLabel = hasDetail ? 'Edit Details ▾' : 'Add Email / Note ▾';
+
+  const pitchEsc = (l.pitch||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+  const gUrl = gmailUrl(entry.email || l.to || '', l.subject || '', l.pitch || '');
+  const whyHtml = l.why ? `<div class="why">${l.why}</div>` : '';
+  const noteHtml = l.note ? `<div class="note-sys">⚠ ${l.note}</div>` : '';
+
+  return `
+<div class="card ${cardClass}" data-id="${l.id}" data-tier="${l.tier}" style="${cardDisplay}">
+  <div class="status-badge" style="${badgeStyle}">${badgeText}</div>
+  <div class="card-head">
+    <div>
+      <div class="name">${l.name}</div>
+      ${handleHTML}
+    </div>
+    <div class="tags">
+      <span class="tag" style="background:${tc.bg};color:${tc.color};border-color:${tc.border}">${tc.label}</span>
+      <span class="tag" style="background:#f0ede8;color:#888;border-color:#ddd">${(l.size||'').slice(0,22)}</span>
+    </div>
+  </div>
+  <div class="meta">
+    <div class="m">Contact: <b>${l.contact}</b></div>
+    <div class="m">Hook: <b>${(l.hook||'').slice(0,55)}</b></div>
+  </div>
+  ${whyHtml}
+  <div class="pitch-lbl">Pitch</div>
+  <div class="pitch-body" id="pitch-${l.id}"></div>
+  <div class="btn-row">
+    <button class="copy-btn" data-pitch="${l.id}" onclick="copyPitch(this)">Copy Text</button>
+    <a class="gmail-btn" href="${gUrl}" target="_blank">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      Open in Gmail
+    </a>
+    <button class="detail-toggle" onclick="toggleDetail(${l.id})">${toggleLabel}</button>
+  </div>
+  ${noteHtml}
+  ${savedHtml}
+  <div class="detail-panel" id="detail-${l.id}">
+    <div class="detail-row">
+      <div class="detail-label">Email</div>
+      <input class="detail-input" type="email" id="email-${l.id}" placeholder="found their email?" value="${entry.email||''}" />
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Note</div>
+      <textarea class="detail-input" id="note-${l.id}" placeholder="anything worth remembering…">${entry.note||''}</textarea>
+    </div>
+    ${status === 'skip' ? reasonRow : ''}
+    <button class="detail-save" id="save-${l.id}" onclick="saveDetail(${l.id})">Save</button>
+  </div>
+  <div class="status-row">
+    ${stBtns}
+  </div>
+</div>`;
+}
+
+function getBadgeStyle(status) {
+  const styles = {
+    sent: `display:block;background:var(--green-bg);color:var(--green);border-color:var(--green-bd)`,
+    wait: `display:block;background:var(--yell-bg);color:var(--yellow);border-color:var(--yell-bd)`,
+    skip: `display:block;background:var(--skip-bg);color:var(--muted);border-color:var(--skip-bd)`,
+  };
+  return styles[status] || 'display:none';
+}
+function getStatusLabel(status) {
+  return { sent:'Sent ✓', wait:'Follow Up', skip:'Skipped' }[status] || '';
+}
+
+function render() {
+  const container = document.getElementById('cards-container');
+  document.getElementById('loading').style.display = 'none';
+  let html = '', currentSection = null;
+  for (const l of LEADS) {
+    if (l.tier !== currentSection) {
+      currentSection = l.tier;
+      html += `<h2>${SECTION_MAP[l.tier] || l.tier}</h2>`;
+    }
+    html += buildCardHTML(l);
+  }
+  container.innerHTML = html;
+  // Set pitch text safely via textContent to avoid backtick/quote collisions
+  for (const l of LEADS) {
+    const el = document.getElementById(`pitch-${l.id}`);
+    if (el) el.textContent = l.pitch || '';
+  }
+  updateSummary();
+}
+
+function refreshCard(id) {
+  const lead = LEADS.find(l => l.id === id);
+  if (!lead) return;
+  const existing = document.querySelector(`[data-id="${id}"]`);
+  if (!existing) return;
+  const wasOpen = existing.querySelector('.detail-panel.open') !== null;
+  existing.outerHTML = buildCardHTML(lead);
+  const newCard = document.querySelector(`[data-id="${id}"]`);
+  // Set pitch safely
+  const pitchEl = document.getElementById(`pitch-${id}`);
+  if (pitchEl) pitchEl.textContent = lead.pitch || '';
+  if (newCard && wasOpen) {
+    const panel = newCard.querySelector('.detail-panel');
+    if (panel) panel.classList.add('open');
+  }
+  // Apply filter
+  if (newCard) newCard.style.display = shouldShow(lead) ? '' : 'none';
+}
+
+function shouldShow(l) {
+  const st = STATUSES[l.id]?.status || null;
+  if (currentFilter === 'all')  return true;
+  if (currentFilter === 'todo') return !st;
+  return st === currentFilter;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[data-id]').forEach(card => {
+    const id = parseInt(card.getAttribute('data-id'));
+    const lead = LEADS.find(l => l.id === id);
+    if (lead) card.style.display = shouldShow(lead) ? '' : 'none';
+  });
+  updateSummary();
+}
+
+function toggleDetail(id) {
+  const panel = document.getElementById(`detail-${id}`);
+  if (!panel) return;
+  panel.classList.toggle('open');
+  const btn = panel.parentElement.querySelector('.detail-toggle');
+  if (btn) {
+    const isOpen = panel.classList.contains('open');
+    const entry = STATUSES[id] || {};
+    const hasDetail = entry.email || entry.note || entry.reason;
+    btn.textContent = isOpen ? 'Close ▴' : (hasDetail ? 'Edit Details ▾' : 'Add Email / Note ▾');
+  }
+}
+
+function updateSummary() {
+  const total = LEADS.length;
+  const sent  = Object.values(STATUSES).filter(e => e.status === 'sent').length;
+  const wait  = Object.values(STATUSES).filter(e => e.status === 'wait').length;
+  const skip  = Object.values(STATUSES).filter(e => e.status === 'skip').length;
+  const todo  = total - sent - wait - skip;
+  document.getElementById('summary').innerHTML =
+    `<span style="color:var(--green);font-weight:600">${sent} sent</span> &nbsp;·&nbsp; ` +
+    `<span style="color:var(--yellow);font-weight:600">${wait} follow up</span> &nbsp;·&nbsp; ` +
+    `<span style="color:var(--muted);font-weight:600">${skip} skipped</span> &nbsp;·&nbsp; ` +
+    `<span style="font-weight:600">${todo} to do</span> <span style="color:var(--muted)">of ${total}</span>`;
+}
+
+function copyPitch(btn) {
+  const id = parseInt(btn.getAttribute('data-pitch'));
+  const lead = LEADS.find(l => l.id === id);
+  if (!lead) return;
+  navigator.clipboard.writeText(lead.pitch).then(() => {
+    const o = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = o; btn.style.background = ''; }, 2000);
+  });
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text.replace(/\\n/g,'\n')).then(() => {
+    const o = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = o; btn.style.background = ''; }, 2000);
+  });
+}
+
+// Expose functions to global scope for inline onclick handlers
+window.setStatus    = setStatus;
+window.saveDetail   = saveDetail;
+window.toggleDetail = toggleDetail;
+window.copyText     = copyText;
+window.copyPitch    = copyPitch;
+window.setFilter    = setFilter;
+window.saveConfig   = saveConfig;
+window.toggleConfig = toggleConfig;
+
+document.addEventListener('DOMContentLoaded', () => {
+  prefillConfig();
+  loadData();
+});
+</script>
+</body>
+</html>
