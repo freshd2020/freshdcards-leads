@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FreshDCards — Glengarry Leads v8.2</title>
+<title>FreshDCards — Glengarry Leads v8.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap');
 :root {
@@ -78,7 +78,7 @@ select.dinput{cursor:pointer;}
 <header>
   <div>
     <div class="hlbl">FreshDCards Outreach</div>
-    <div class="htitle">The <em>Glengarry</em> Leads · v8.2</div>
+    <div class="htitle">The <em>Glengarry</em> Leads · v8.3</div>
   </div>
   <div class="vbadge"><!-- v8 · 2026-05-15 --><br><span id="cnt">310</span> LEADS</div>
 </header>
@@ -238,6 +238,12 @@ async function loadStatuses() {
 }
 
 // ── Status ──
+function handleSB(btn) {
+  const id = parseInt(btn.getAttribute('data-id'));
+  const status = btn.getAttribute('data-st');
+  setStatus(id, status);
+}
+
 function setStatus(id, status) {
   if (!ST[id]) ST[id] = {};
   const e = ST[id];
@@ -333,7 +339,7 @@ function cardHTML(l) {
   const stBtns = ['sent','wait','skip'].map(s => {
     const lbl = s==='sent'?'Mark Sent':s==='wait'?'Follow Up':'Skip';
     const cls = 'sb' + (st===s?' on-'+s:'');
-    return '<button class="' + cls + '" onclick="setStatus(' + l.id + ','' + s + '')">' + lbl + '</button>';
+    return '<button class="' + cls + '" data-id="' + l.id + '" data-st="' + s + '" onclick="handleSB(this)">' + lbl + '</button>';
   }).join('');
 
   const savedParts = [];
